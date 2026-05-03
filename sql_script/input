@@ -1,0 +1,23 @@
+WITH CustomerActivity AS (
+    SELECT 
+        "Customer ID",
+        MAX("Order Date") AS last_purchase,
+        COUNT("Order ID") AS total_orders,
+        SUM("Sales") AS total_revenue,
+        AVG("Sales") AS avg_order_value
+    FROM sales_data
+    GROUP BY "Customer ID"
+)
+SELECT 
+    "Customer ID",
+    total_orders,
+    ROUND(total_revenue, 2) AS lifetime_value,
+    -- Flipped the dates so we get positive numbers
+    DATEDIFF('day', last_purchase, '2018-01-01'::DATE) AS days_since_last_order,
+    CASE 
+        WHEN DATEDIFF('day', last_purchase, '2018-01-01'::DATE) > 90 THEN 'High Risk (Churned)'
+        WHEN DATEDIFF('day', last_purchase, '2018-01-01'::DATE) BETWEEN 31 AND 90 THEN 'At Risk'
+        ELSE 'Active/Loyal'
+    END AS churn_status
+FROM CustomerActivity
+ORDER BY lifetime_value DESC; -- Shows the most valuable customers first!
